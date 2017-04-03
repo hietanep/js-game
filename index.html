@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Testing Page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+</head>
+<body>
+    <div id="statistics">
+        <div>Message type:<span id="type"></span></div>
+        <div>Game score:<span id="game_score"></span></div>
+        <div>Game detais to be saved:<div id="game_details"></div></div>
+    </div>
+    <div id="game">
+        <iframe src="muistipeli.html" width="800" height="600" scrolling="no"></iframe>
+    </div>
+
+
+
+<script>
+
+    /* send game data back to game */
+    function sendGameDataToChild(evt){
+        var msg = {
+            "messageType": "LOAD",
+            "gameState": {
+                "score": parseFloat($("#score").text()),
+                "pair_count": parseFloat($("#pair_count").text()),
+                "level_nro": parseFloat($("#level_nro").text()),
+                "card_array": ($("#card_array").text())
+            }
+        };
+
+        evt.source.postMessage(msg, "*");
+    }
+
+    /* receiver */
+    function receiveMessage(event)
+    {
+        // Do we trust the sender of this message?
+        //if (event.origin !== "http://example.com:8080")
+        //    return;
+
+        $("#type").html(event.data.messageType);
+
+        if(event.data.messageType == "SCORE") {
+            $("#game_score").html(event.data.score);
+        }
+
+        if(event.data.messageType == "SAVE") {
+			$("#game_details").html("");
+            $.each(event.data.gameState, function( key, value ) {				
+                $("#game_details").append("<div>"+key+"<span id='"+key+"'>"+value+"<span></div>");
+            });
+        }
+
+        if(event.data.messageType == "LOAD_REQUEST") {
+            sendGameDataToChild(event);
+        }
+    }
+
+    window.addEventListener("message", receiveMessage, false);
+
+
+</script>
+</body>
+</html>

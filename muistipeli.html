@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        #container {
+            margin: 0 auto;
+            width: 50%;
+            height: 100%;
+        }
+        #gameContainer {
+            margin: 0 auto;
+            width: 100%;
+        }
+        .boxRow {
+            width: 100%;
+            display: block;
+            height: 25%;
+        }
+        .box1 {
+            display: inline-block;
+            position: relative;
+            border-radius: 8px;
+            text-align: center;
+            vertical-align: middle;
+            min-width: 5px;
+            min-height: 10px;
+            height: 95%;
+            width: 23%;
+            background-color: white;
+            border: 2px solid black;
+        }
+
+        .flipped.pair1 {
+            background-color: cyan;
+        }
+        .flipped.pair2 {
+            background-color: indigo;
+        }
+        .flipped.pair3 {
+            background-color: yellow;
+
+        }
+        .flipped.pair4 {
+            background-color: grey;
+
+        }
+        .flipped.pair5 {
+            background-color: green;
+
+        }
+        .flipped.pair6 {
+            background-color: orange;
+
+        }
+        .flipped.pair7 {
+            background-color: red;
+
+        }
+        .flipped.pair8 {
+            background-color: magenta;
+
+        }
+
+        .matched {
+            background-color: white;
+            border-color: white;
+        }
+
+        button {
+            background-color: #cccccc;
+            border: 1px solid #666666;
+            color: #000000;
+            padding: 5px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 12px;
+        }
+		button:disabled {
+            background-color: #cccccc;
+            border: 1px solid #cccccc;
+            color: #666666;
+            padding: 5px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 12px;
+        }
+
+        .left{
+            float: left;
+            margin-right: 40px;
+        }
+        #gameInfo{
+            width: 100%;
+        }
+
+    </style>
+</head>
+<body>
+<div id="container">
+    <p id="gameInfo">
+        <div class="left">
+            <div>Score:<span id="score">0</span></div>
+        </div>
+        <div class="left">Level:<span id="level_nro">1</span></div>
+        <div class="left"><button id="save">Save game</button></div>
+        <div><button id="load">Load game</button></div>
+    </p>
+    <div id="gameContainer">
+        <p id="win" style="display: none">You win <br><button id="newGameButton">New Level</button></p>
+    </div>
+    <div id="card_array" hidden="hidden"></div>
+</div>
+
+<script>
+    var pair = null;
+    var flipping = false;
+    var score = 0;
+    var levelNro = 1;
+    var pairCount = 0;
+    var gameSize;
+    var gameOver = false;
+
+    function initVars() {
+        pair = null;
+        flipping = false;
+        pairCount = 0;
+        gameOver = false;
+
+        $(".boxRow").detach();
+        updateScore();
+    }
+
+    function randomCardArray(removed_cards) {
+        var cardArr = [1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8];
+
+        for (var i = cardArr.length - (1 + removed_cards); i > 0; i--)
+        {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = cardArr[i];
+            cardArr[i] = cardArr[j];
+            cardArr[j] = temp;
+        }
+
+        gameSize = cardArr.length / 2;
+
+        return cardArr;
+    }
+
+    function generateCards(removed_cards, card_array) {
+
+        var cards = "";
+
+        if(card_array === undefined){
+            var cardArray = randomCardArray(removed_cards);
+        }else{
+            var cardArray = card_array.split(",");
+        }
+        var strCardArray = cardArray +"";
+        $("#card_array").html(strCardArray);
+
+        var leftToRemove = removed_cards % 4;
+
+        for(var i=0; i<(4 - (removed_cards / 4));i++)
+        {
+            cards += "<div class='boxRow'>";
+
+            for(var j=0; j<4; j++)
+            {
+                if(leftToRemove > 0)
+                {
+                    leftToRemove--;
+                }
+
+                else
+                {
+                    cards += "<div class='box1 pair" + cardArray.pop() + "'></div>";
+                }
+            }
+
+            cards += "</div>"
+        }
+
+        $("#gameContainer").append(cards);
+    }
+
+    function updateScore() {
+        $("#score").html("");
+        $("#score").append(score);
+        //$("#pair_count").html(pairCount);
+        $("#level_nro").html(levelNro);
+    }
+
+    function loadGame (saved_score, saved_level_nro,) {
+        score = saved_score;
+        levelNro = saved_level_nro;
+        updateScore();
+        //$("#gameContainer").empty();
+        initVars();
+        generateCards(pairCount * 2);
+    }
+
+    $(window).resize(function () {
+        $("#gameContainer").css("height", $("#gameContainer").css("width"));
+    });
+
+    $("#newGameButton").click(function() {
+        levelNro++;
+        initVars();
+
+        generateCards(0);
+		
+		$("#game_size").html(gameSize);
+        $("#win").slideUp();
+		$("#save").prop("disabled", false);
+    });
+
+    $("#gameContainer").on("click", ".box1", function() {
+	
+		$("#save").prop("disabled", true);
+		
+        if(!flipping)
+        {
+            if(!($(this).hasClass("flipped")) && !($(this).hasClass("matched")))
+            {
+                if(pair == null)
+                {
+                    pair = {};
+                    pair.first = this.className;
+                    $(this).toggleClass("flipped");
+                }
+                else if(pair.first != undefined)
+                {
+                    var match = false;
+                    flipping = true;
+                    pair.second = this.className;
+                    $(this).toggleClass("flipped");
+
+                    if(pair.first == pair.second)
+                        match = true;
+                    else if(score>0)
+                        score--;
+                    $("#pair_count").html(pairCount);
+                    $("#game_size").html(gameSize);
+
+                    setTimeout(function(box) {
+                        if(match) {
+                            $(".flipped").removeClass(pair.first);
+                            $(".flipped").addClass("box1 matched");
+                            pairCount++;
+                            score += 2;
+
+                            if(pairCount == gameSize) {
+                                $("#win").slideDown();
+                                gameOver = true;
+                                // send score to parentwindow
+                                sendScoreToParent();
+                            }
+                        }
+
+                        $(".flipped").toggleClass("flipped");
+                        updateScore();
+                        flipping = false;
+                        pair = null;
+                    }, 500);
+                }
+            }
+            else
+                return;
+        }
+    });
+
+
+
+    /* postmessages for parent window */
+    $("#save").click( function () {
+        var msg = {
+            "messageType": "SAVE",
+            "gameState": {
+                "score": parseFloat($("#score").text()),
+                "level_nro": parseFloat($("#level_nro").text())
+            }
+        };
+        window.parent.postMessage(msg, "*");
+    });
+
+    // Sends a request to the service for a
+    // state to be sent, if there is one.
+    $("#load").click( function () {
+        var msg = {
+            "messageType": "LOAD_REQUEST",
+        };
+        window.parent.postMessage(msg, "*");
+    });
+
+    function sendScoreToParent(){
+        var msg = {
+            "messageType": "SCORE",
+            "score": parseFloat($("#score").text())
+        };
+
+        window.parent.postMessage(msg, "*");
+    }
+
+    /* listener for LOAD */
+    function receiveMessage(event) {
+
+        if (event.data.messageType == "LOAD") {
+            loadGame(event.data.gameState.score, event.data.gameState.level_nro);
+
+        } else if (event.data.messageType === "ERROR") {
+            alert(event.data.info);
+        }
+    }
+
+    window.addEventListener("message", receiveMessage, false);
+
+
+    $(document).ready(function() {
+	
+        $("#gameContainer").css("height", $("#gameContainer").css("width"));
+        generateCards(0);
+
+    });
+
+
+</script>
+
+</body>
+</html>
