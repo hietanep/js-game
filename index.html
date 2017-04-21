@@ -12,7 +12,7 @@
         <div>Game detais to be saved:<div id="game_details"></div></div>
     </div>
     <div id="game">
-        <iframe src="muistipeli.html" width="800" height="600" scrolling="no"></iframe>
+        <iframe id="game_iframe" src="muistipeli.html" width="800" height="600" scrolling="no"></iframe>
     </div>
 
 
@@ -42,6 +42,22 @@
         //    return;
 
         $("#type").html(event.data.messageType);
+
+        if(event.data.messageType == "SETTING") {
+            var w = 600;
+            var h = 400;
+
+            if(event.data.options.width!== undefined && event.data.options.width > 0) {
+                w = event.data.options.width;
+            }
+
+            if(event.data.options.height!== undefined && event.data.options.height > 0) {
+                h = event.data.options.height;
+            }
+
+            $("#game_iframe").width(w);
+            $("#game_iframe").height(h);
+        }
 
         if(event.data.messageType == "SCORE") {
             $("#game_score").html(event.data.score);
